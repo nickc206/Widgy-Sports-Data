@@ -4,13 +4,11 @@ from datetime import datetime, timedelta
 
 OUTPUT_FILE = "sports.json"
 
-# Return current time in PST
 def current_pst_time():
     utc_now = datetime.utcnow()
-    pst_now = utc_now - timedelta(hours=7)  # adjust if daylight saving changes
+    pst_now = utc_now - timedelta(hours=7)
     return pst_now
 
-# Format PST time string from UTC time
 def format_pst_time(dt_str):
     if not dt_str:
         return ""
@@ -18,7 +16,6 @@ def format_pst_time(dt_str):
     pst = dt - timedelta(hours=7)
     return pst.strftime("%I:%M %p")
 
-# Format PST date string from UTC time
 def format_pst_date(dt_str):
     if not dt_str:
         return ""
@@ -26,7 +23,6 @@ def format_pst_date(dt_str):
     pst = dt - timedelta(hours=7)
     return pst.strftime("%m/%d")
 
-# Get league short name
 def league_short(league):
     return {
         "English Premier League": "EPL",
@@ -40,7 +36,6 @@ def league_short(league):
         "UEFA Euro": "Euro"
     }.get(league, league)
 
-# Get team short name
 def team_short(name):
     return {
         "Paris Saint-Germain": "PSG",
@@ -56,18 +51,15 @@ def team_short(name):
         "Bologna": "Bologna"
     }.get(name, name)
 
-# Top teams for fallback logic
 TOP_TEAMS = [
     "Real Madrid", "Barcelona", "PSG", "Manchester City", "Manchester United",
     "Juventus", "Bayern Munich", "Borussia Dortmund", "Arsenal", "Liverpool", "Bologna"
 ]
 
-# List of important competitions
 TOP_COMPETITIONS = [
     "UEFA Champions League", "UEFA Europa League", "FIFA World Cup", "UEFA Euro"
 ]
 
-# API endpoints (replace with yours if needed)
 BASE_URL = "https://site.api.espn.com/apis/site/v2/sports"
 
 TEAMS = {
@@ -94,10 +86,18 @@ def get_team_game(team_abbr, include_record=False):
         url += "?enable=record"
     resp = requests.get(url)
     team = resp.json().get("team", {})
-    next_event = team.get("nextEvent", [{}])[0]
-    return next_event
+    next_events = team.get("nextEvent", [])
+    return next_events[0] if next_events else None
 
 def extract_game_fields(game, show_team_record=False):
+    if not game:
+        return {
+            "home_team": "", "away_team": "", "home_short": "", "away_short": "",
+            "home_score": "", "away_score": "", "home_logo": "", "away_logo": "",
+            "home_record": "", "away_record": "", "date": "", "time": "",
+            "status": "no game", "is_live": False, "time_left": "", "quarter": ""
+        }
+
     date = format_pst_time(game.get('start_time'))
     date_raw = format_pst_date(game.get('start_time'))
     status = game.get("status", {}).get("type", {}).get("description", "scheduled")
@@ -158,20 +158,20 @@ def get_top_soccer_games():
 def main():
     data = {}
 
-    # Get next game for each selected team
     for key, abbr in TEAMS.items():
         game = get_team_game(abbr, include_record=True)
         data[key] = extract_game_fields(game, show_team_record=True)
 
-    # Top game per league
     for league, endpoint in LEAGUES.items():
-        url = f"{BASE_URL}/{endpoint}/scoreboard"
-        resp = requests.get(url).json()
-        events = resp.get("events", [])
-        if events:
-            data[league] = extract_game_fields(events[0])
+        try:
+            url = f"{BASE_URL}/{endpoint}/scoreboard"
+            resp = requests.get(url).json()
+            events = resp.get("events", [])
+            game = events[0] if events else None
+            data[league] = extract_game_fields(game)
+        except Exception:
+            data[league] = extract_game_fields(None)
 
-    # Top 3 soccer games
     data["soccer"] = get_top_soccer_games()
 
     with open(OUTPUT_FILE, "w") as f:
