@@ -1,4 +1,4 @@
-name: Update Sports Data
+name: update
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests
+          pip install requests pytz
 
       - name: Run update script
         run: python scripts/update.py
