@@ -4,13 +4,11 @@ from datetime import datetime, timedelta
 
 OUTPUT_FILE = "sports.json"
 
-# Return current time in PST
 def current_pst_time():
     utc_now = datetime.utcnow()
-    pst_now = utc_now - timedelta(hours=7)  # adjust if daylight saving changes
+    pst_now = utc_now - timedelta(hours=7)
     return pst_now
 
-# Format PST time string from UTC time
 def format_pst_time(dt_str):
     if not dt_str:
         return ""
@@ -18,7 +16,6 @@ def format_pst_time(dt_str):
     pst = dt - timedelta(hours=7)
     return pst.strftime("%I:%M %p")
 
-# Format PST date string from UTC time
 def format_pst_date(dt_str):
     if not dt_str:
         return ""
@@ -26,7 +23,6 @@ def format_pst_date(dt_str):
     pst = dt - timedelta(hours=7)
     return pst.strftime("%m/%d")
 
-# Get league short name
 def league_short(league):
     return {
         "English Premier League": "EPL",
@@ -40,7 +36,6 @@ def league_short(league):
         "UEFA Euro": "Euro"
     }.get(league, league)
 
-# Get team short name
 def team_short(name):
     return {
         "Paris Saint-Germain": "PSG",
@@ -157,15 +152,16 @@ def get_top_soccer_games():
                     2
                 )
                 games.append((importance, league_rank, game))
-        except:
+        except Exception:
             continue
+    # Defensive filter before sort
+    games = [g for g in games if isinstance(g, tuple) and len(g) == 3]
     games.sort()
     return [extract_game_fields(g[2]) for g in games[:3]]
 
 def main():
     data = {}
 
-    # Get selected teams
     for key, url in TEAMS.items():
         try:
             game = get_team_game(url)
@@ -173,7 +169,6 @@ def main():
         except:
             data[key] = {}
 
-    # Top game per league
     for league, endpoint in LEAGUES.items():
         try:
             resp = requests.get(f"{BASE_URL}/{endpoint}/scoreboard")
@@ -185,7 +180,6 @@ def main():
         except:
             data[league] = {}
 
-    # Top 3 soccer games
     data["soccer"] = get_top_soccer_games()
 
     with open(OUTPUT_FILE, "w") as f:
