@@ -53,100 +53,111 @@ def team_short(name):
         "Borussia Dortmund": "Dortmund",
         "Liverpool": "Liverpool",
         "Arsenal": "Arsenal",
-        "Bologna": "Bologna"
+        "Bologna": "Bologna",
+        "Atlético Madrid": "Atlético",
+        "Napoli": "Napoli",
+        "Inter Milan": "Inter",
+        "AC Milan": "AC Milan",
+        "Marseille": "Marseille",
+        "AS Roma": "Roma",
+        "Chelsea": "Chelsea",
+        "Tottenham Hotspur": "Spurs",
+        "Newcastle United": "Newcastle",
+        "RB Leipzig": "RB Leipzig"
     }.get(name, name)
 
-# Top teams for fallback logic
 TOP_TEAMS = [
     "Real Madrid", "Barcelona", "PSG", "Manchester City", "Manchester United",
-    "Juventus", "Bayern Munich", "Borussia Dortmund", "Arsenal", "Liverpool", "Bologna"
+    "Juventus", "Bayern Munich", "Borussia Dortmund", "Arsenal", "Liverpool",
+    "Bologna", "Atlético Madrid", "Napoli", "Inter Milan", "AC Milan", "Marseille",
+    "AS Roma", "Chelsea", "Tottenham Hotspur", "Newcastle United", "RB Leipzig"
 ]
 
-# List of important competitions
 TOP_COMPETITIONS = [
-    "UEFA Champions League", "UEFA Europa League", "FIFA World Cup", "UEFA Euro"
+    "UEFA Champions League", "FIFA World Cup", "UEFA Euro", "UEFA Europa League"
 ]
 
-# API base URL
 BASE_URL = "https://site.api.espn.com/apis/site/v2/sports"
 
-# Selected teams by sport (correct endpoints)
-SELECTED_TEAMS = {
-    "seahawks": ("football/nfl", "sea"),
-    "mariners": ("baseball/mlb", "sea"),
-    "kraken": ("hockey/nhl", "sea")
+TEAMS = {
+    "seahawks": "football/nfl/teams/sea",
+    "mariners": "baseball/mlb/teams/sea",
+    "kraken": "hockey/nhl/teams/sea"
 }
 
-# Top leagues by sport
 LEAGUES = {
     "nfl": "football/nfl",
     "nba": "basketball/nba",
-    "mlb": "baseball/mlb",
     "nhl": "hockey/nhl",
+    "mlb": "baseball/mlb",
 }
 
-# Soccer league IDs to check
 SOCCER_LEAGUES = [
     "uefa.champions", "uefa.europa", "fifa.world", "uefa.euro",
     "eng.1", "esp.1", "ita.1", "ger.1", "fra.1"
 ]
 
-def get_team_game(sport_path, team_abbr):
-    url = f"{BASE_URL}/{sport_path}/teams/{team_abbr}"
-    try:
-        resp = requests.get(url).json()
-        team = resp.get("team", {})
-        return team.get("nextEvent", [{}])[0]
-    except Exception:
-        return {}
-
 def extract_game_fields(game, show_team_record=False):
-    if not game:
-        return {}
-    competitions = game.get("competitions", [{}])[0]
-    competitors = competitions.get("competitors", [{}])
+    date = format_pst_time(game.get('date'))
+    date_raw = format_pst_date(game.get('date'))
+    status = game.get("status", {}).get("type", {}).get("description", "scheduled")
+    short_status = game.get("status", {}).get("type", {}).get("shortDetail", "")
+    is_live = game.get("status", {}).get("type", {}).get("state", "") == "in"
+    time_left = game.get("status", {}).get("displayClock", "")
+    period = game.get("status", {}).get("period", "")
 
-    if len(competitors) < 2:
-        return {}
+    competitors = game.get("competitions", [{}])[0].get("competitors", [])
+    home, away = sorted(competitors, key=lambda x: x.get("homeAway") != "home")
 
-    home = competitors[0] if competitors[0].get("homeAway") == "home" else competitors[1]
-    away = competitors[1] if home == competitors[0] else competitors[0]
-
-    status = game.get("status", {}).get("type", {})
-    start_time = game.get("date", "")
+    home_team = home.get("team", {}).get("displayName", "")
+    away_team = away.get("team", {}).get("displayName", "")
+    home_short = team_short(home_team)
+    away_short = team_short(away_team)
+    home_score = home.get("score", "")
+    away_score = away.get("score", "")
+    home_logo = home.get("team", {}).get("logo", "")
+    away_logo = away.get("team", {}).get("logo", "")
+    home_record = home.get("records", [{}])[0].get("summary", "") if show_team_record else ""
+    away_record = away.get("records", [{}])[0].get("summary", "") if show_team_record else ""
 
     return {
-        "home_team": home.get("team", {}).get("displayName", ""),
-        "away_team": away.get("team", {}).get("displayName", ""),
-        "home_short": team_short(home.get("team", {}).get("displayName", "")),
-        "away_short": team_short(away.get("team", {}).get("displayName", "")),
-        "home_score": home.get("score", ""),
-        "away_score": away.get("score", ""),
-        "home_logo": home.get("team", {}).get("logo", ""),
-        "away_logo": away.get("team", {}).get("logo", ""),
-        "home_record": home.get("records", [{}])[0].get("summary", "") if show_team_record else "",
-        "away_record": away.get("records", [{}])[0].get("summary", "") if show_team_record else "",
-        "date": format_pst_date(start_time),
-        "time": format_pst_time(start_time),
-        "status": status.get("description", "scheduled"),
-        "is_live": status.get("state") == "in",
-        "time_left": game.get("status", {}).get("displayClock", ""),
-        "quarter": game.get("status", {}).get("period", "")
+        "home_team": home_team,
+        "away_team": away_team,
+        "home_short": home_short,
+        "away_short": away_short,
+        "home_score": home_score,
+        "away_score": away_score,
+        "home_logo": home_logo,
+        "away_logo": away_logo,
+        "home_record": home_record,
+        "away_record": away_record,
+        "date": date_raw,
+        "time": date,
+        "status": status,
+        "is_live": is_live,
+        "time_left": time_left,
+        "quarter": period
     }
+
+def get_team_game(team_url):
+    resp = requests.get(f"{BASE_URL}/{team_url}")
+    return resp.json().get("team", {}).get("nextEvent", [{}])[0]
 
 def get_top_soccer_games():
     games = []
     for league in SOCCER_LEAGUES:
         try:
-            url = f"{BASE_URL}/soccer/{league}/scoreboard"
-            resp = requests.get(url).json()
-            events = resp.get("events", [])
-            for event in events:
-                league_name = event.get("league", {}).get("name", "")
+            resp = requests.get(f"{BASE_URL}/soccer/{league}/scoreboard")
+            for game in resp.json().get("events", []):
+                league_name = game.get("league", {}).get("name", "")
                 league_rank = TOP_COMPETITIONS.index(league_name) if league_name in TOP_COMPETITIONS else 99
-                importance = 0 if league_rank < 99 else 1 if any(team.lower() in str(event).lower() for team in TOP_TEAMS) else 2
-                games.append((importance, league_rank, event))
-        except Exception:
+                importance = (
+                    0 if league_rank < 99 else
+                    1 if any(team.lower() in str(game).lower() for team in TOP_TEAMS) else
+                    2
+                )
+                games.append((importance, league_rank, game))
+        except:
             continue
     games.sort()
     return [extract_game_fields(g[2]) for g in games[:3]]
@@ -154,22 +165,27 @@ def get_top_soccer_games():
 def main():
     data = {}
 
-    # Selected teams (Seahawks, Mariners, Kraken)
-    for label, (sport_path, abbr) in SELECTED_TEAMS.items():
-        game = get_team_game(sport_path, abbr)
-        data[label] = extract_game_fields(game, show_team_record=True)
-
-    # Top league game from NFL, NBA, MLB, NHL
-    for league, path in LEAGUES.items():
+    # Get selected teams
+    for key, url in TEAMS.items():
         try:
-            url = f"{BASE_URL}/{path}/scoreboard"
-            events = requests.get(url).json().get("events", [])
+            game = get_team_game(url)
+            data[key] = extract_game_fields(game, show_team_record=True)
+        except:
+            data[key] = {}
+
+    # Top game per league
+    for league, endpoint in LEAGUES.items():
+        try:
+            resp = requests.get(f"{BASE_URL}/{endpoint}/scoreboard")
+            events = resp.json().get("events", [])
             if events:
                 data[league] = extract_game_fields(events[0])
-        except Exception:
+            else:
+                data[league] = {}
+        except:
             data[league] = {}
 
-    # Top 3 prioritized soccer games
+    # Top 3 soccer games
     data["soccer"] = get_top_soccer_games()
 
     with open(OUTPUT_FILE, "w") as f:
