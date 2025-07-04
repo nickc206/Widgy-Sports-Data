@@ -4,13 +4,11 @@ from datetime import datetime, timedelta
 
 OUTPUT_FILE = "sports.json"
 
-# Return current time in PST
 def current_pst_time():
     utc_now = datetime.utcnow()
     pst_now = utc_now - timedelta(hours=7)
     return pst_now
 
-# Format PST time string from UTC time
 def format_pst_time(dt_str):
     if not dt_str:
         return ""
@@ -18,7 +16,6 @@ def format_pst_time(dt_str):
     pst = dt - timedelta(hours=7)
     return pst.strftime("%I:%M %p")
 
-# Format PST date string from UTC time
 def format_pst_date(dt_str):
     if not dt_str:
         return ""
@@ -26,7 +23,6 @@ def format_pst_date(dt_str):
     pst = dt - timedelta(hours=7)
     return pst.strftime("%m/%d")
 
-# Get league short name
 def league_short(league):
     return {
         "English Premier League": "EPL",
@@ -40,7 +36,6 @@ def league_short(league):
         "UEFA Euro": "Euro"
     }.get(league, league)
 
-# Get team short name
 def team_short(name):
     return {
         "Paris Saint-Germain": "PSG",
@@ -97,20 +92,21 @@ def get_team_game(team_abbr, include_record=False):
         url += "?enable=record"
     resp = requests.get(url)
     team = resp.json().get("team", {})
-    next_event = team.get("nextEvent", [{}])[0]
-    return next_event
+    next_events = team.get("nextEvent", [])
+    return next_events[0] if next_events else {}
 
 def extract_game_fields(game, show_team_record=False):
     try:
         date = format_pst_time(game.get('start_time'))
         date_raw = format_pst_date(game.get('start_time'))
         status = game.get("status", {}).get("type", {}).get("description", "scheduled")
-        short_status = game.get("status", {}).get("type", {}).get("shortDetail", "")
         is_live = game.get("status", {}).get("type", {}).get("state", "") == "in"
         time_left = game.get("status", {}).get("displayClock", "")
         period = game.get("status", {}).get("period", "")
-        home = game.get("competitions", [{}])[0].get("competitors", [{}])[0]
-        away = game.get("competitions", [{}])[0].get("competitors", [{}])[1]
+        competitors = game.get("competitions", [{}])[0].get("competitors", [])
+
+        home = competitors[0] if len(competitors) > 0 else {}
+        away = competitors[1] if len(competitors) > 1 else {}
 
         home_team = home.get("team", {}).get("displayName", "")
         away_team = away.get("team", {}).get("displayName", "")
@@ -142,7 +138,7 @@ def extract_game_fields(game, show_team_record=False):
             "quarter": period
         }
     except Exception:
-        return None
+        return {}
 
 def get_top_soccer_games():
     games = []
