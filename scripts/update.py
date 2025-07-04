@@ -14,7 +14,7 @@ def format_pst_time(dt_str):
         return ""
     dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
     pst = dt - timedelta(hours=7)
-    return pst.strftime("%I:%M %p")
+    return pst.strftime("%I:%M %p").lstrip("0")
 
 def format_pst_date(dt_str):
     if not dt_str:
@@ -50,16 +50,26 @@ def team_short(name):
         "Arsenal": "Arsenal",
         "Bologna": "Bologna",
         "Atlético Madrid": "Atlético",
-        "Marseille": "Marseille",
         "Napoli": "Napoli",
+        "Marseille": "Marseille",
+        "Inter Milan": "Inter",
         "AC Milan": "AC Milan",
-        "Inter Milan": "Inter"
+        "AS Roma": "Roma",
+        "Sevilla": "Sevilla",
+        "RB Leipzig": "RB Leipzig",
+        "Leverkusen": "Leverkusen",
+        "Lyon": "Lyon",
+        "Monaco": "Monaco",
+        "Tottenham Hotspur": "Spurs",
+        "Chelsea": "Chelsea"
     }.get(name, name)
 
 TOP_TEAMS = [
     "Real Madrid", "Barcelona", "PSG", "Manchester City", "Manchester United",
     "Juventus", "Bayern Munich", "Borussia Dortmund", "Arsenal", "Liverpool", "Bologna",
-    "Atlético Madrid", "Marseille", "Napoli", "AC Milan", "Inter Milan"
+    "Atlético Madrid", "Napoli", "Marseille", "Inter Milan", "AC Milan",
+    "AS Roma", "Sevilla", "RB Leipzig", "Leverkusen", "Lyon", "Monaco",
+    "Tottenham Hotspur", "Chelsea"
 ]
 
 TOP_COMPETITIONS = [
@@ -68,17 +78,18 @@ TOP_COMPETITIONS = [
 
 BASE_URL = "https://site.api.espn.com/apis/site/v2/sports"
 
+# Updated to include league and team abbreviation
 TEAMS = {
-    "seahawks": "sea",
-    "mariners": "sea",
-    "kraken": "sea"
+    "seahawks": ("football/nfl", "sea"),
+    "mariners": ("baseball/mlb", "sea"),
+    "kraken": ("hockey/nhl", "sea")
 }
 
 LEAGUES = {
     "nfl": "football/nfl",
     "nba": "basketball/nba",
     "nhl": "hockey/nhl",
-    "mlb": "baseball/mlb",
+    "mlb": "baseball/mlb"
 }
 
 SOCCER_LEAGUES = [
@@ -86,8 +97,8 @@ SOCCER_LEAGUES = [
     "eng.1", "esp.1", "ita.1", "ger.1", "fra.1"
 ]
 
-def get_team_game(team_abbr, include_record=False):
-    url = f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/{team_abbr}"
+def get_team_game(league_path, team_abbr, include_record=False):
+    url = f"{BASE_URL}/{league_path}/teams/{team_abbr}"
     if include_record:
         url += "?enable=record"
     resp = requests.get(url)
@@ -96,49 +107,54 @@ def get_team_game(team_abbr, include_record=False):
     return next_events[0] if next_events else {}
 
 def extract_game_fields(game, show_team_record=False):
-    try:
-        date = format_pst_time(game.get('start_time'))
-        date_raw = format_pst_date(game.get('start_time'))
-        status = game.get("status", {}).get("type", {}).get("description", "scheduled")
-        is_live = game.get("status", {}).get("type", {}).get("state", "") == "in"
-        time_left = game.get("status", {}).get("displayClock", "")
-        period = game.get("status", {}).get("period", "")
-        competitors = game.get("competitions", [{}])[0].get("competitors", [])
+    start_time = (
+        game.get("start_time") or
+        game.get("date") or
+        game.get("startDate") or
+        ""
+    )
+    date = format_pst_time(start_time)
+    date_raw = format_pst_date(start_time)
 
-        home = competitors[0] if len(competitors) > 0 else {}
-        away = competitors[1] if len(competitors) > 1 else {}
+    status = game.get("status", {}).get("type", {}).get("description", "scheduled")
+    short_status = game.get("status", {}).get("type", {}).get("shortDetail", "")
+    is_live = game.get("status", {}).get("type", {}).get("state", "") == "in"
+    time_left = game.get("status", {}).get("displayClock", "")
+    period = game.get("status", {}).get("period", "")
 
-        home_team = home.get("team", {}).get("displayName", "")
-        away_team = away.get("team", {}).get("displayName", "")
-        home_short = team_short(home_team)
-        away_short = team_short(away_team)
-        home_score = home.get("score", "")
-        away_score = away.get("score", "")
-        home_logo = home.get("team", {}).get("logo", "")
-        away_logo = away.get("team", {}).get("logo", "")
-        home_record = home.get("records", [{}])[0].get("summary", "") if show_team_record else ""
-        away_record = away.get("records", [{}])[0].get("summary", "") if show_team_record else ""
+    competitors = game.get("competitions", [{}])[0].get("competitors", [])
+    home = competitors[0] if len(competitors) > 0 else {}
+    away = competitors[1] if len(competitors) > 1 else {}
 
-        return {
-            "home_team": home_team,
-            "away_team": away_team,
-            "home_short": home_short,
-            "away_short": away_short,
-            "home_score": home_score,
-            "away_score": away_score,
-            "home_logo": home_logo,
-            "away_logo": away_logo,
-            "home_record": home_record,
-            "away_record": away_record,
-            "date": date_raw,
-            "time": date,
-            "status": status,
-            "is_live": is_live,
-            "time_left": time_left,
-            "quarter": period
-        }
-    except Exception:
-        return {}
+    home_team = home.get("team", {}).get("displayName", "")
+    away_team = away.get("team", {}).get("displayName", "")
+    home_short = team_short(home_team)
+    away_short = team_short(away_team)
+    home_score = home.get("score", "")
+    away_score = away.get("score", "")
+    home_logo = home.get("team", {}).get("logo", "")
+    away_logo = away.get("team", {}).get("logo", "")
+    home_record = home.get("records", [{}])[0].get("summary", "") if show_team_record else ""
+    away_record = away.get("records", [{}])[0].get("summary", "") if show_team_record else ""
+
+    return {
+        "home_team": home_team,
+        "away_team": away_team,
+        "home_short": home_short,
+        "away_short": away_short,
+        "home_score": home_score,
+        "away_score": away_score,
+        "home_logo": home_logo,
+        "away_logo": away_logo,
+        "home_record": home_record,
+        "away_record": away_record,
+        "date": date_raw,
+        "time": date,
+        "status": status,
+        "is_live": is_live,
+        "time_left": time_left,
+        "quarter": period
+    }
 
 def get_top_soccer_games():
     games = []
@@ -150,22 +166,19 @@ def get_top_soccer_games():
             for game in events:
                 league_name = game.get("league", {}).get("name", "")
                 league_rank = TOP_COMPETITIONS.index(league_name) if league_name in TOP_COMPETITIONS else 99
-                importance = 0 if league_rank < 99 else 1 if any(t.lower() in str(game).lower() for t in TOP_TEAMS) else 2
-                games.append({
-                    "importance": importance,
-                    "rank": league_rank,
-                    "game": game
-                })
+                game_text = json.dumps(game).lower()
+                importance = 0 if league_rank < 99 else 1 if any(t.lower() in game_text for t in TOP_TEAMS) else 2
+                games.append((importance, league_rank, game))
         except Exception:
             continue
-    games.sort(key=lambda g: (g["importance"], g["rank"]))
-    return [extract_game_fields(g["game"]) for g in games if extract_game_fields(g["game"])][:3]
+    games.sort(key=lambda x: (x[0], x[1]))
+    return [extract_game_fields(g[2]) for g in games[:3]]
 
 def main():
     data = {}
 
-    for key, abbr in TEAMS.items():
-        game = get_team_game(abbr, include_record=True)
+    for key, (league_path, abbr) in TEAMS.items():
+        game = get_team_game(league_path, abbr, include_record=True)
         data[key] = extract_game_fields(game, show_team_record=True)
 
     for league, endpoint in LEAGUES.items():
@@ -176,7 +189,7 @@ def main():
             if events:
                 data[league] = extract_game_fields(events[0])
         except Exception:
-            continue
+            data[league] = {}
 
     data["soccer"] = get_top_soccer_games()
 
