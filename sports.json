@@ -22,8 +22,14 @@
     "away_team": "Kansas City Royals",
     "home_short": "Mariners",
     "away_short": "Royals",
-    "home_score": "",
-    "away_score": "",
+    "home_score": {
+      "value": 2.0,
+      "displayValue": "2"
+    },
+    "away_score": {
+      "value": 3.0,
+      "displayValue": "3"
+    },
     "home_logo": "",
     "away_logo": "",
     "home_record": "",
