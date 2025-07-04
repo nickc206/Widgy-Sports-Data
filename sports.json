@@ -12,7 +12,7 @@
     "away_record": "",
     "date": "09/04",
     "time": "5:20 PM",
-    "status": "status_scheduled",
+    "status": "scheduled",
     "is_live": false,
     "time_left": "0:00",
     "quarter": 0
@@ -30,7 +30,7 @@
     "away_record": "50-32",
     "date": "06/22",
     "time": "5:00 PM",
-    "status": "status_final",
+    "status": "final",
     "is_live": false,
     "time_left": "0.0",
     "quarter": 4
@@ -48,10 +48,10 @@
     "away_record": "43-45",
     "date": "07/04",
     "time": "8:05 AM",
-    "status": "status_in_progress",
+    "status": "in progress",
     "is_live": true,
     "time_left": "0:00",
-    "quarter": 5
+    "quarter": 6
   },
   "nhl": {
     "home_team": "Utah Mammoth",
@@ -66,7 +66,7 @@
     "away_record": "",
     "date": "09/20",
     "time": "9:00 PM",
-    "status": "status_scheduled",
+    "status": "scheduled",
     "is_live": false,
     "time_left": "0:00",
     "quarter": 0
