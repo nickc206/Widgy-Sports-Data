@@ -1,4 +1,4 @@
-import requests
+limport requests
 import json
 from datetime import datetime
 import pytz
@@ -19,8 +19,8 @@ def format_date(dt_str):
     dt = dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone("US/Pacific"))
     return dt.strftime("%m/%d")
 
-def get_team_game(team_id):
-    url = f"https://site.api.espn.com/apis/site/v2/sports/teams/{team_id}"
+def get_team_game(sport, league, abbreviation):
+    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/teams/{abbreviation}"
     data = fetch_json(url)
 
     events = data.get("team", {}).get("nextEvent", [])
@@ -114,15 +114,14 @@ def empty_game():
 
 def main():
     result = {
-        # Seahawks = team ID 26
-        "seahawks": get_team_game("26"),
-        "mariners": get_team_game("21"),
-        "kraken": get_team_game("90"),
+        "seahawks": get_team_game("football", "nfl", "sea"),
+        "mariners": get_team_game("baseball", "mlb", "sea"),
+        "kraken": get_team_game("hockey", "nhl", "sea"),
         "nfl": get_league_game("football", "nfl"),
         "nba": get_league_game("basketball", "nba"),
         "mlb": get_league_game("baseball", "mlb"),
         "nhl": get_league_game("hockey", "nhl"),
-        "soccer": []  # placeholder
+        "soccer": []  # placeholder for next logic update
     }
 
     with open("sports.json", "w") as f:
