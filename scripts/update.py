@@ -1,96 +1,72 @@
-import requests
 import json
+import requests
 from datetime import datetime
-import pytz
+from dateutil import parser
 
 def fetch_json(url):
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    r = requests.get(url, headers=headers)
+    r = requests.get(url)
     r.raise_for_status()
     return r.json()
 
-def format_time(dt_str):
-    dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%MZ")
-    dt = dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone("US/Pacific"))
-    return dt.strftime("%I:%M %p").lstrip("0")
+def safe_logo(team):
+    try:
+        return team["logos"][0]["href"]
+    except (KeyError, IndexError, TypeError):
+        return ""
 
-def format_date(dt_str):
-    dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%MZ")
-    dt = dt.replace(tzinfo=pytz.utc).astimezone(pytz.timezone("US/Pacific"))
-    return dt.strftime("%m/%d")
+def format_game(event, sport_type):
+    competitions = event.get("competitions", [{}])[0]
+    competitors = competitions.get("competitors", [])
+    if len(competitors) != 2:
+        return None
 
-def get_team_game(sport, league, abbreviation):
-    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/teams/{abbreviation}"
+    home = next((c for c in competitors if c.get("homeAway") == "home"), {})
+    away = next((c for c in competitors if c.get("homeAway") == "away"), {})
+
+    event_dt = parser.parse(event["date"])
+    pacific = event_dt.astimezone()
+    time_str = pacific.strftime("%-I:%M %p")
+    date_str = pacific.strftime("%m/%d")
+
+    status_info = competitions.get("status", {}).get("type", {})
+    is_live = status_info.get("state") == "in"
+
+    return {
+        "home_team": home.get("team", {}).get("displayName", ""),
+        "away_team": away.get("team", {}).get("displayName", ""),
+        "home_short": home.get("team", {}).get("shortDisplayName", ""),
+        "away_short": away.get("team", {}).get("shortDisplayName", ""),
+        "home_score": home.get("score", ""),
+        "away_score": away.get("score", ""),
+        "home_logo": safe_logo(home.get("team", {})),
+        "away_logo": safe_logo(away.get("team", {})),
+        "home_record": home.get("records", [{}])[0].get("summary", ""),
+        "away_record": away.get("records", [{}])[0].get("summary", ""),
+        "date": date_str,
+        "time": time_str,
+        "status": status_info.get("description", "scheduled").lower(),
+        "is_live": is_live,
+        "time_left": competitions.get("status", {}).get("displayClock", ""),
+        "quarter": competitions.get("status", {}).get("period", 0),
+    }
+
+def get_team_game(team_id):
+    url = f"https://site.api.espn.com/apis/site/v2/sports/teams/{team_id}"
     data = fetch_json(url)
-
     events = data.get("team", {}).get("nextEvent", [])
     if not events:
         return empty_game()
-
-    event = events[0]
-    competition = event["competitions"][0]
-    status = competition["status"]["type"]["name"]
-    is_live = status == "STATUS_IN_PROGRESS"
-
-    home = competition["competitors"][0] if competition["competitors"][0]["homeAway"] == "home" else competition["competitors"][1]
-    away = competition["competitors"][1] if competition["competitors"][0]["homeAway"] == "home" else competition["competitors"][0]
-
-    event_dt = datetime.strptime(event["date"], "%Y-%m-%dT%H:%MZ").replace(tzinfo=pytz.utc).astimezone(pytz.timezone("US/Pacific"))
-
-    return {
-        "home_team": home["team"]["displayName"],
-        "away_team": away["team"]["displayName"],
-        "home_short": home["team"]["shortDisplayName"],
-        "away_short": away["team"]["shortDisplayName"],
-        "home_score": home.get("score", "0"),
-        "away_score": away.get("score", "0"),
-        "home_logo": home["team"]["logos"][0]["href"],
-        "away_logo": away["team"]["logos"][0]["href"],
-        "home_record": home.get("records", [{}])[0].get("summary", ""),
-        "away_record": away.get("records", [{}])[0].get("summary", ""),
-        "date": event_dt.strftime("%m/%d"),
-        "time": event_dt.strftime("%I:%M %p").lstrip("0"),
-        "status": status.lower(),
-        "is_live": is_live,
-        "time_left": competition["status"].get("displayClock", ""),
-        "quarter": competition["status"].get("period", 0)
-    }
+    return format_game(events[0], data.get("sport", {}).get("name", "")) or empty_game()
 
 def get_league_game(sport, league):
     url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard"
     data = fetch_json(url)
     events = data.get("events", [])
-    if not events:
-        return empty_game()
-
-    event = events[0]
-    competition = event["competitions"][0]
-    status = competition["status"]["type"]["name"]
-    is_live = status == "STATUS_IN_PROGRESS"
-
-    home = competition["competitors"][0] if competition["competitors"][0]["homeAway"] == "home" else competition["competitors"][1]
-    away = competition["competitors"][1] if competition["competitors"][0]["homeAway"] == "home" else competition["competitors"][0]
-
-    event_dt = datetime.strptime(event["date"], "%Y-%m-%dT%H:%MZ").replace(tzinfo=pytz.utc).astimezone(pytz.timezone("US/Pacific"))
-
-    return {
-        "home_team": home["team"]["displayName"],
-        "away_team": away["team"]["displayName"],
-        "home_short": home["team"]["shortDisplayName"],
-        "away_short": away["team"]["shortDisplayName"],
-        "home_score": home.get("score", "0"),
-        "away_score": away.get("score", "0"),
-        "home_logo": home["team"]["logos"][0]["href"],
-        "away_logo": away["team"]["logos"][0]["href"],
-        "home_record": home.get("records", [{}])[0].get("summary", ""),
-        "away_record": away.get("records", [{}])[0].get("summary", ""),
-        "date": event_dt.strftime("%m/%d"),
-        "time": event_dt.strftime("%I:%M %p").lstrip("0"),
-        "status": status.lower(),
-        "is_live": is_live,
-        "time_left": competition["status"].get("displayClock", ""),
-        "quarter": competition["status"].get("period", 0)
-    }
+    for event in events:
+        game = format_game(event, sport)
+        if game:
+            return game
+    return empty_game()
 
 def empty_game():
     return {
@@ -113,19 +89,18 @@ def empty_game():
     }
 
 def main():
-    result = {
-        "seahawks": get_team_game("football", "nfl", "sea"),
-        "mariners": get_team_game("baseball", "mlb", "sea"),
-        "kraken": get_team_game("hockey", "nhl", "sea"),
+    data = {
+        "seahawks": get_team_game("sea"),
+        "mariners": get_team_game("sea"),
+        "kraken": get_team_game("sea"),
         "nfl": get_league_game("football", "nfl"),
         "nba": get_league_game("basketball", "nba"),
         "mlb": get_league_game("baseball", "mlb"),
         "nhl": get_league_game("hockey", "nhl"),
-        "soccer": []  # placeholder for next logic update
+        "soccer": []  # will be filled next step
     }
-
     with open("sports.json", "w") as f:
-        json.dump(result, f, indent=2)
+        json.dump(data, f, indent=2)
 
 if __name__ == "__main__":
     main()
