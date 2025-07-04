@@ -1,169 +1,85 @@
-import json
 import requests
+import json
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
-
-PACIFIC = ZoneInfo("America/Los_Angeles")
+import pytz
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0"
 }
 
-TOP_SOCCER_TEAMS = [
-    # EPL
-    "Manchester City", "Liverpool", "Arsenal", "Manchester United", "Chelsea", "Tottenham Hotspur", "Newcastle United",
-    # La Liga
-    "Real Madrid", "Barcelona", "Atlético Madrid", "Sevilla",
-    # Serie A
-    "Inter Milan", "AC Milan", "Juventus", "Napoli", "Roma",
-    # Bundesliga
-    "Bayern Munich", "Borussia Dortmund", "RB Leipzig", "Bayer Leverkusen",
-    # Ligue 1
-    "Paris Saint-Germain", "Marseille", "Monaco",
-    # Other notables
-    "Club América", "Ajax", "Benfica", "Porto"
-]
-
-SOCCER_LEAGUES = [
-    "eng.1", "esp.1", "ita.1", "ger.1", "fra.1",
-    "uefa.champions", "uefa.europa", "fifa.world", "uefa.euro", "fifa.cwc"
-]
-
 TEAM_IDS = {
-    "seahawks": "26",      # NFL
-    "mariners": "12",      # MLB
-    "kraken": "55"         # NHL
+    "seahawks": "26",
+    "mariners": "12",
+    "kraken": "90",
+    "nfl": "nfl",
+    "nba": "nba",
+    "mlb": "mlb",
+    "nhl": "nhl"
 }
 
-LEAGUE_IDS = {
-    "nfl": "28",
-    "nba": "23",
-    "mlb": "10",
-    "nhl": "17"
-}
+TOP_SOCCER_TEAMS = [
+    "Real Madrid", "Barcelona", "Atlético Madrid",
+    "Manchester City", "Manchester United", "Liverpool", "Arsenal", "Chelsea", "Tottenham Hotspur",
+    "Bayern Munich", "Borussia Dortmund",
+    "Juventus", "Inter Milan", "AC Milan", "Napoli",
+    "Paris Saint-Germain", "Marseille", "Monaco",
+    "Ajax", "Porto", "Benfica", "Sporting CP",
+    "Bologna"
+]
 
-def fetch_json(url):
+TOP_SOCCER_LEAGUES = [
+    "UEFA Champions League", "FIFA World Cup", "UEFA Euro", "UEFA Europa League",
+    "English Premier League", "La Liga", "Bundesliga", "Serie A", "Ligue 1",
+    "FIFA Club World Cup"
+]
+
+PACIFIC_TZ = pytz.timezone("America/Los_Angeles")
+
+def get_json(url):
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
     return response.json()
 
-def convert_time(iso_str):
-    try:
-        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00")).astimezone(PACIFIC)
-        return dt.strftime("%m/%d"), dt.strftime("%-I:%M %p")
-    except Exception:
-        return "", ""
+def format_time(iso_time):
+    dt = datetime.fromisoformat(iso_time.replace("Z", "+00:00")).astimezone(PACIFIC_TZ)
+    return dt.strftime("%I:%M %p").lstrip("0"), dt.strftime("%m/%d")
+
+def get_scoreboard(sport):
+    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{sport}/scoreboard"
+    return get_json(url)
 
 def get_team_game(team_id, include_record=False):
     url = f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/{team_id}"
-    try:
-        data = fetch_json(url)
-        team = data.get("team", {})
-        next_event = team.get("nextEvent", [])
-        if not next_event:
-            return empty_game()
-        game = next_event[0]
-        competition = game.get("competitions", [{}])[0]
-        competitors = competition.get("competitors", [])
-        home, away = sorted(competitors, key=lambda x: x["homeAway"] != "home")
-        date, time = convert_time(game.get("date", ""))
-
-        return {
-            "home_team": home.get("team", {}).get("displayName", ""),
-            "away_team": away.get("team", {}).get("displayName", ""),
-            "home_short": home.get("team", {}).get("shortDisplayName", ""),
-            "away_short": away.get("team", {}).get("shortDisplayName", ""),
-            "home_score": home.get("score", ""),
-            "away_score": away.get("score", ""),
-            "home_logo": home.get("team", {}).get("logo", ""),
-            "away_logo": away.get("team", {}).get("logo", ""),
-            "home_record": home.get("records", [{}])[0].get("summary", "") if include_record else "",
-            "away_record": away.get("records", [{}])[0].get("summary", "") if include_record else "",
-            "date": date,
-            "time": time,
-            "status": game.get("status", {}).get("type", {}).get("description", "").capitalize(),
-            "is_live": game.get("status", {}).get("type", {}).get("state", "") == "in",
-            "time_left": game.get("status", {}).get("displayClock", ""),
-            "quarter": game.get("status", {}).get("period", "")
-        }
-    except Exception:
+    data = get_json(url)
+    team = data.get("team", {})
+    next_event = team.get("nextEvent", [])
+    if not next_event:
         return empty_game()
+    event = next_event[0]
+    competitors = event["competitions"][0]["competitors"]
+    home = next(c for c in competitors if c["homeAway"] == "home")
+    away = next(c for c in competitors if c["homeAway"] == "away")
 
-def get_league_game(league_abbr, league_id):
-    url = f"https://site.api.espn.com/apis/site/v2/sports/{league_abbr}/scoreboard"
-    try:
-        data = fetch_json(url)
-        events = data.get("events", [])
-        if not events:
-            return empty_game()
-        game = events[0]
-        competition = game.get("competitions", [{}])[0]
-        competitors = competition.get("competitors", [])
-        home, away = sorted(competitors, key=lambda x: x["homeAway"] != "home")
-        date, time = convert_time(game.get("date", ""))
-
-        return {
-            "home_team": home.get("team", {}).get("displayName", ""),
-            "away_team": away.get("team", {}).get("displayName", ""),
-            "home_short": home.get("team", {}).get("shortDisplayName", ""),
-            "away_short": away.get("team", {}).get("shortDisplayName", ""),
-            "home_score": home.get("score", ""),
-            "away_score": away.get("score", ""),
-            "home_logo": home.get("team", {}).get("logo", ""),
-            "away_logo": away.get("team", {}).get("logo", ""),
-            "home_record": home.get("records", [{}])[0].get("summary", ""),
-            "away_record": away.get("records", [{}])[0].get("summary", ""),
-            "date": date,
-            "time": time,
-            "status": game.get("status", {}).get("type", {}).get("description", "").capitalize(),
-            "is_live": game.get("status", {}).get("type", {}).get("state", "") == "in",
-            "time_left": game.get("status", {}).get("displayClock", ""),
-            "quarter": game.get("status", {}).get("period", "")
-        }
-    except Exception:
-        return empty_game()
-
-def get_top_soccer_games():
-    games = []
-    now = datetime.now(PACIFIC)
-    try:
-        for league in SOCCER_LEAGUES:
-            url = f"https://site.api.espn.com/apis/site/v2/sports/soccer/{league}/scoreboard"
-            data = fetch_json(url)
-            for event in data.get("events", []):
-                comp = event.get("competitions", [{}])[0]
-                teams = comp.get("competitors", [])
-                if len(teams) != 2:
-                    continue
-                home, away = sorted(teams, key=lambda x: x["homeAway"] != "home")
-                home_name = home.get("team", {}).get("displayName", "")
-                away_name = away.get("team", {}).get("displayName", "")
-                if any(team in TOP_SOCCER_TEAMS for team in [home_name, away_name]):
-                    game_time = datetime.fromisoformat(event.get("date", "").replace("Z", "+00:00")).astimezone(PACIFIC)
-                    if game_time >= now:
-                        date, time = convert_time(event["date"])
-                        games.append({
-                            "home_team": home_name,
-                            "away_team": away_name,
-                            "home_short": home.get("team", {}).get("shortDisplayName", ""),
-                            "away_short": away.get("team", {}).get("shortDisplayName", ""),
-                            "home_score": home.get("score", ""),
-                            "away_score": away.get("score", ""),
-                            "home_logo": home.get("team", {}).get("logo", ""),
-                            "away_logo": away.get("team", {}).get("logo", ""),
-                            "home_record": "",
-                            "away_record": "",
-                            "date": date,
-                            "time": time,
-                            "status": event.get("status", {}).get("type", {}).get("description", ""),
-                            "is_live": event.get("status", {}).get("type", {}).get("state", "") == "in",
-                            "time_left": event.get("status", {}).get("displayClock", ""),
-                            "quarter": event.get("status", {}).get("period", "")
-                        })
-        games.sort(key=lambda g: datetime.strptime(g["date"] + " " + g["time"], "%m/%d %I:%M %p"))
-    except Exception:
-        return []
-    return games[:3]
+    time_str, date_str = format_time(event["date"])
+    game = {
+        "home_team": home["team"]["displayName"],
+        "away_team": away["team"]["displayName"],
+        "home_short": home["team"].get("shortDisplayName", ""),
+        "away_short": away["team"].get("shortDisplayName", ""),
+        "home_score": home.get("score", ""),
+        "away_score": away.get("score", ""),
+        "home_logo": home["team"]["logos"][0]["href"],
+        "away_logo": away["team"]["logos"][0]["href"],
+        "home_record": home["records"][0]["summary"] if include_record and "records" in home else "",
+        "away_record": away["records"][0]["summary"] if include_record and "records" in away else "",
+        "date": date_str,
+        "time": time_str,
+        "status": event["status"]["type"]["description"],
+        "is_live": event["status"]["type"]["state"] == "in",
+        "time_left": event["status"]["displayClock"],
+        "quarter": event["status"]["period"]
+    }
+    return game
 
 def empty_game():
     return {
@@ -185,16 +101,103 @@ def empty_game():
         "quarter": ""
     }
 
+def get_league_game(sport):
+    games = get_scoreboard(sport).get("events", [])
+    if not games:
+        return empty_game()
+    game = games[0]
+    comp = game["competitions"][0]
+    competitors = comp["competitors"]
+    home = next(c for c in competitors if c["homeAway"] == "home")
+    away = next(c for c in competitors if c["homeAway"] == "away")
+    time_str, date_str = format_time(game["date"])
+    return {
+        "home_team": home["team"]["displayName"],
+        "away_team": away["team"]["displayName"],
+        "home_short": home["team"].get("shortDisplayName", ""),
+        "away_short": away["team"].get("shortDisplayName", ""),
+        "home_score": home.get("score", "0"),
+        "away_score": away.get("score", "0"),
+        "home_logo": home["team"]["logos"][0]["href"],
+        "away_logo": away["team"]["logos"][0]["href"],
+        "home_record": home.get("records", [{}])[0].get("summary", ""),
+        "away_record": away.get("records", [{}])[0].get("summary", ""),
+        "date": date_str,
+        "time": time_str,
+        "status": game["status"]["type"]["description"],
+        "is_live": game["status"]["type"]["state"] == "in",
+        "time_left": game["status"]["displayClock"],
+        "quarter": game["status"]["period"]
+    }
+
+def get_top_soccer_games():
+    url = "https://site.api.espn.com/apis/site/v2/sports/soccer/scoreboard"
+    data = get_json(url)
+    events = data.get("events", [])
+    future_games = []
+    now = datetime.now(pytz.utc)
+
+    for event in events:
+        league = event.get("leagues", [{}])[0].get("name", "")
+        comp = event.get("competitions", [{}])[0]
+        competitors = comp.get("competitors", [])
+        if len(competitors) < 2:
+            continue
+        home = next((c for c in competitors if c.get("homeAway") == "home"), {})
+        away = next((c for c in competitors if c.get("homeAway") == "away"), {})
+        home_name = home.get("team", {}).get("displayName", "")
+        away_name = away.get("team", {}).get("displayName", "")
+
+        # Only include future games
+        try:
+            event_time = datetime.fromisoformat(event["date"].replace("Z", "+00:00"))
+            if event_time < now:
+                continue
+        except:
+            continue
+
+        time_str, date_str = format_time(event["date"])
+        score = {
+            "home_team": home_name,
+            "away_team": away_name,
+            "home_short": home.get("team", {}).get("shortDisplayName", home_name),
+            "away_short": away.get("team", {}).get("shortDisplayName", away_name),
+            "home_score": home.get("score", "0"),
+            "away_score": away.get("score", "0"),
+            "home_logo": home.get("team", {}).get("logos", [{}])[0].get("href", ""),
+            "away_logo": away.get("team", {}).get("logos", [{}])[0].get("href", ""),
+            "home_record": home.get("records", [{}])[0].get("summary", ""),
+            "away_record": away.get("records", [{}])[0].get("summary", ""),
+            "date": date_str,
+            "time": time_str,
+            "status": event.get("status", {}).get("type", {}).get("description", ""),
+            "is_live": event.get("status", {}).get("type", {}).get("state", "") == "in",
+            "time_left": event.get("status", {}).get("displayClock", "0'"),
+            "quarter": event.get("status", {}).get("period", "")
+        }
+
+        priority = 0
+        if league in TOP_SOCCER_LEAGUES:
+            priority += 10
+        if home_name in TOP_SOCCER_TEAMS or away_name in TOP_SOCCER_TEAMS:
+            priority += 5
+        priority -= (event_time - now).days  # earlier = higher priority
+        future_games.append((priority, score))
+
+    top_games = sorted(future_games, key=lambda x: -x[0])[:3]
+    return [game for _, game in top_games]
+
 def main():
-    data = {}
-    data["seahawks"] = get_team_game(TEAM_IDS["seahawks"])
-    data["mariners"] = get_team_game(TEAM_IDS["mariners"])
-    data["kraken"] = get_team_game(TEAM_IDS["kraken"])
-
-    for league, lid in LEAGUE_IDS.items():
-        data[league] = get_league_game(league, lid)
-
-    data["soccer"] = get_top_soccer_games()
+    data = {
+        "seahawks": get_team_game("26"),
+        "mariners": get_team_game("sea"),
+        "kraken": get_team_game("sea"),
+        "nfl": get_league_game("nfl"),
+        "nba": get_league_game("nba"),
+        "mlb": get_league_game("mlb"),
+        "nhl": get_league_game("nhl"),
+        "soccer": get_top_soccer_games()
+    }
 
     with open("sports.json", "w") as f:
         json.dump(data, f, indent=2)
