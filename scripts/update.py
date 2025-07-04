@@ -1,6 +1,7 @@
 import requests
+import json
 from datetime import datetime
-from pytz import timezone
+from dateutil import parser
 
 def fetch_json(url):
     r = requests.get(url)
@@ -10,77 +11,71 @@ def fetch_json(url):
 def get_league_game(sport, league):
     url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard"
     data = fetch_json(url)
-
     events = data.get("events", [])
     if not events:
         return blank_game()
 
     event = events[0]
-    competitions = event.get("competitions", [{}])
-    if not competitions:
-        return blank_game()
+    competition = event["competitions"][0]
+    home = competition["competitors"][0]
+    away = competition["competitors"][1]
 
-    comp = competitions[0]
-    home = comp.get("competitors", [])[0]
-    away = comp.get("competitors", [])[1]
-    status = comp.get("status", {}).get("type", {}).get("description", "scheduled")
-    is_live = status.lower() == "in progress"
-
-    event_dt = datetime.fromisoformat(event["date"].replace("Z", "+00:00")).astimezone(timezone("US/Pacific"))
+    event_dt = parser.parse(event["date"])
+    home_score = home.get("score", "0")
+    away_score = away.get("score", "0")
 
     return {
         "home_team": home["team"]["displayName"],
         "away_team": away["team"]["displayName"],
-        "home_short": home["team"].get("shortDisplayName", ""),
-        "away_short": away["team"].get("shortDisplayName", ""),
-        "home_score": home.get("score", ""),
-        "away_score": away.get("score", ""),
+        "home_short": home["team"]["shortDisplayName"],
+        "away_short": away["team"]["shortDisplayName"],
+        "home_score": home_score,
+        "away_score": away_score,
         "home_logo": home["team"].get("logos", [{}])[0].get("href", ""),
         "away_logo": away["team"].get("logos", [{}])[0].get("href", ""),
         "home_record": home.get("records", [{}])[0].get("summary", ""),
         "away_record": away.get("records", [{}])[0].get("summary", ""),
         "date": event_dt.strftime("%m/%d"),
         "time": event_dt.strftime("%-I:%M %p"),
-        "status": status.lower(),
-        "is_live": is_live,
-        "time_left": comp.get("status", {}).get("displayClock", ""),
-        "quarter": comp.get("status", {}).get("period", "")
+        "status": event["status"]["type"]["description"].lower(),
+        "is_live": event["status"]["type"]["state"] == "in",
+        "time_left": competition.get("status", {}).get("displayClock", ""),
+        "quarter": competition.get("status", {}).get("period", "")
     }
 
 def get_team_game(team_id):
     url = f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/{team_id}"
     data = fetch_json(url)
-
-    events = data.get("team", {}).get("nextEvent", [])
-    if not events:
+    next_event = data["team"].get("nextEvent", [])
+    if not next_event:
         return blank_game()
 
-    event = events[0]
-    comp = event.get("competitions", [{}])[0]
-    home = comp.get("competitors", [])[0]
-    away = comp.get("competitors", [])[1]
-    status = comp.get("status", {}).get("type", {}).get("description", "scheduled")
-    is_live = status.lower() == "in progress"
+    event = next_event[0]
+    competition = event["competitions"][0]
+    home = competition["competitors"][0]
+    away = competition["competitors"][1]
 
-    event_dt = datetime.fromisoformat(event["date"].replace("Z", "+00:00")).astimezone(timezone("US/Pacific"))
+    event_dt = parser.parse(event["date"])
+    home_score = home.get("score", "0")
+    away_score = away.get("score", "0")
 
     return {
         "home_team": home["team"]["displayName"],
         "away_team": away["team"]["displayName"],
-        "home_short": home["team"].get("shortDisplayName", ""),
-        "away_short": away["team"].get("shortDisplayName", ""),
-        "home_score": home.get("score", ""),
-        "away_score": away.get("score", ""),
+        "home_short": home["team"]["shortDisplayName"],
+        "away_short": away["team"]["shortDisplayName"],
+        "home_score": home_score,
+        "away_score": away_score,
         "home_logo": home["team"].get("logos", [{}])[0].get("href", ""),
         "away_logo": away["team"].get("logos", [{}])[0].get("href", ""),
         "home_record": home.get("records", [{}])[0].get("summary", ""),
         "away_record": away.get("records", [{}])[0].get("summary", ""),
         "date": event_dt.strftime("%m/%d"),
         "time": event_dt.strftime("%-I:%M %p"),
-        "status": status.lower(),
-        "is_live": is_live,
-        "time_left": comp.get("status", {}).get("displayClock", ""),
-        "quarter": comp.get("status", {}).get("period", "")
+        "status": event["status"]["type"]["description"].lower(),
+        "is_live": event["status"]["type"]["state"] == "in",
+        "time_left": competition.get("status", {}).get("displayClock", ""),
+        "quarter": competition.get("status", {}).get("period", "")
     }
 
 def blank_game():
@@ -109,10 +104,12 @@ def main():
         "nba": get_league_game("basketball", "nba"),
         "mlb": get_league_game("baseball", "mlb"),
         "nhl": get_league_game("hockey", "nhl"),
-        "seahawks": get_team_game("26")  # numeric ID for Seahawks
+        "seahawks": get_team_game("26"),
+        "mariners": blank_game(),  # placeholder
+        "kraken": blank_game(),    # placeholder
+        "soccer": []               # placeholder
     }
 
-    import json
     with open("sports.json", "w") as f:
         json.dump(output, f, indent=2)
 
