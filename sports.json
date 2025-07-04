@@ -41,7 +41,7 @@
     "home_short": "Nationals",
     "away_short": "Red Sox",
     "home_score": "1",
-    "away_score": "9",
+    "away_score": "11",
     "home_logo": "",
     "away_logo": "",
     "home_record": "37-50",
@@ -51,7 +51,7 @@
     "status": "in progress",
     "is_live": true,
     "time_left": "0:00",
-    "quarter": 8
+    "quarter": 9
   },
   "nhl": {
     "home_team": "Utah Mammoth",
