@@ -81,15 +81,19 @@ def get_next_game(sport, league):
     if not future:
         return blank_game()
 
-    future.sort()
+    future.sort(key=lambda x: x[0])  # Sort by datetime
     return parse_event(future[0][1])
 
-data = {
-    "nfl": get_next_game("football", "nfl"),
-    "nba": get_next_game("basketball", "nba"),
-    "mlb": get_next_game("baseball", "mlb"),
-    "nhl": get_next_game("hockey", "nhl")
-}
+def main():
+    data = {
+        "nfl": get_next_game("football", "nfl"),
+        "nba": get_next_game("basketball", "nba"),
+        "mlb": get_next_game("baseball", "mlb"),
+        "nhl": get_next_game("hockey", "nhl")
+    }
 
-with open("sports.json", "w") as f:
-    json.dump(data, f, indent=2)
+    with open("sports.json", "w") as f:
+        json.dump(data, f, indent=2)
+
+if __name__ == "__main__":
+    main()
