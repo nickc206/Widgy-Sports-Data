@@ -59,10 +59,10 @@ def get_league_game(sport, league):
             past_today_events.append((event_time, event))
 
     if past_today_events:
-        past_today_events.sort(reverse=True)
+        past_today_events.sort(reverse=True, key=lambda x: x[0])
         return parse_event(past_today_events[0][1])
     if future_events:
-        future_events.sort()
+        future_events.sort(key=lambda x: x[0])
         return parse_event(future_events[0][1])
 
     return blank_game()
@@ -102,9 +102,9 @@ def main():
         "mlb": get_league_game("baseball", "mlb"),
         "nhl": get_league_game("hockey", "nhl"),
         "seahawks": get_team_game("26"),
-        "mariners": blank_game(),  # Next step
-        "kraken": blank_game(),    # Next step
-        "soccer": []               # Later step
+        "mariners": blank_game(),  # to be filled next
+        "kraken": blank_game(),    # to be filled later
+        "soccer": []               # to be implemented
     }
 
     with open("sports.json", "w") as f:
