@@ -43,8 +43,8 @@ def get_league_game(sport, league):
         "quarter": competition.get("status", {}).get("period", "")
     }
 
-def get_team_game(team_id):
-    url = f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/{team_id}"
+def get_team_game(sport, league, team_id):
+    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/teams/{team_id}"
     data = fetch_json(url)
     next_event = data["team"].get("nextEvent", [])
     if not next_event:
@@ -104,10 +104,10 @@ def main():
         "nba": get_league_game("basketball", "nba"),
         "mlb": get_league_game("baseball", "mlb"),
         "nhl": get_league_game("hockey", "nhl"),
-        "seahawks": get_team_game("26"),
-        "mariners": blank_game(),  # placeholder
-        "kraken": blank_game(),    # placeholder
-        "soccer": []               # placeholder
+        "seahawks": get_team_game("football", "nfl", "26"),
+        "mariners": blank_game(),  # to be added next
+        "kraken": blank_game(),    # to be added after mariners
+        "soccer": []               # to be added at the end
     }
 
     with open("sports.json", "w") as f:
