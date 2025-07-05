@@ -2,47 +2,45 @@ import requests
 import json
 from datetime import datetime
 from dateutil import parser
-import pytz
+from pytz import timezone, UTC
 
-PACIFIC = pytz.timezone("US/Pacific")
+PT = timezone("America/Los_Angeles")
 
 def fetch_json(url):
     r = requests.get(url)
     r.raise_for_status()
     return r.json()
 
-def format_date_time_utc(utc_str):
-    dt_utc = parser.parse(utc_str).astimezone(pytz.utc)
-    dt_pst = dt_utc.astimezone(PACIFIC)
-    return dt_pst.strftime("%m/%d"), dt_pst.strftime("%-I:%M %p")
+def to_pacific(dt_str):
+    return parser.parse(dt_str).astimezone(PT)
 
 def get_league_game(sport, league):
     url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard"
     data = fetch_json(url)
     events = data.get("events", [])
-    future_events = []
-
-    now = datetime.now(pytz.utc)
-    for event in events:
-        try:
-            event_dt = parser.parse(event["date"])
-            if event_dt >= now:
-                future_events.append((event_dt, event))
-        except:
-            continue
-
-    if not future_events:
+    if not events:
         return blank_game()
 
-    future_events.sort(key=lambda x: x[0])
-    event = future_events[0][1]
+    future_events = []
+    now = datetime.now(UTC)
+
+    for event in events:
+        event_dt = parser.parse(event["date"])
+        if event_dt > now:
+            future_events.append((event_dt, event))
+
+    if not future_events:
+        event = events[0]
+    else:
+        event = sorted(future_events, key=lambda x: x[0])[0][1]
+
     competition = event["competitions"][0]
     home = competition["competitors"][0]
     away = competition["competitors"][1]
 
+    event_dt = to_pacific(event["date"])
     home_score = home.get("score", "0")
     away_score = away.get("score", "0")
-    date_str, time_str = format_date_time_utc(event["date"])
 
     return {
         "home_team": home["team"]["displayName"],
@@ -55,8 +53,8 @@ def get_league_game(sport, league):
         "away_logo": away["team"].get("logos", [{}])[0].get("href", ""),
         "home_record": home.get("records", [{}])[0].get("summary", ""),
         "away_record": away.get("records", [{}])[0].get("summary", ""),
-        "date": date_str,
-        "time": time_str,
+        "date": event_dt.strftime("%m/%d"),
+        "time": event_dt.strftime("%-I:%M %p"),
         "status": event["status"]["type"]["description"].lower(),
         "is_live": event["status"]["type"]["state"] == "in",
         "time_left": competition.get("status", {}).get("displayClock", ""),
@@ -75,9 +73,9 @@ def get_team_game(team_id):
     home = competition["competitors"][0]
     away = competition["competitors"][1]
 
+    event_dt = to_pacific(event["date"])
     home_score = home.get("score", "0")
     away_score = away.get("score", "0")
-    date_str, time_str = format_date_time_utc(event["date"])
 
     return {
         "home_team": home["team"]["displayName"],
@@ -90,8 +88,8 @@ def get_team_game(team_id):
         "away_logo": away["team"].get("logos", [{}])[0].get("href", ""),
         "home_record": home.get("records", [{}])[0].get("summary", ""),
         "away_record": away.get("records", [{}])[0].get("summary", ""),
-        "date": date_str,
-        "time": time_str,
+        "date": event_dt.strftime("%m/%d"),
+        "time": event_dt.strftime("%-I:%M %p"),
         "status": event["status"]["type"]["description"].lower(),
         "is_live": event["status"]["type"]["state"] == "in",
         "time_left": competition.get("status", {}).get("displayClock", ""),
@@ -124,10 +122,10 @@ def main():
         "nba": get_league_game("basketball", "nba"),
         "mlb": get_league_game("baseball", "mlb"),
         "nhl": get_league_game("hockey", "nhl"),
-        "seahawks": blank_game(),  # placeholder
-        "mariners": blank_game(),  # placeholder
-        "kraken": blank_game(),    # placeholder
-        "soccer": []               # placeholder
+        "seahawks": get_team_game("26"),
+        "mariners": blank_game(),  # will fix after Seahawks
+        "kraken": blank_game(),    # will fix after Seahawks
+        "soccer": []
     }
 
     with open("sports.json", "w") as f:
