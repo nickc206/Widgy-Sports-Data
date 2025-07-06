@@ -36,22 +36,22 @@
     "quarter": ""
   },
   "mlb": {
-    "home_team": "Minnesota Twins",
-    "away_team": "Tampa Bay Rays",
-    "home_short": "Twins",
-    "away_short": "Rays",
-    "home_score": "0",
-    "away_score": "0",
+    "home_team": "Atlanta Braves",
+    "away_team": "Baltimore Orioles",
+    "home_short": "Braves",
+    "away_short": "Orioles",
+    "home_score": "1",
+    "away_score": "2",
     "home_logo": "",
     "away_logo": "",
-    "home_record": "43-46",
-    "away_record": "48-41",
+    "home_record": "39-50",
+    "away_record": "40-49",
     "date": "07/06",
-    "time": "11:10 AM",
-    "status": "scheduled",
+    "time": "8:35 AM",
+    "status": "final",
     "is_live": false,
     "time_left": "0:00",
-    "quarter": 1
+    "quarter": 9
   },
   "nhl": {
     "home_team": "Utah Mammoth",
