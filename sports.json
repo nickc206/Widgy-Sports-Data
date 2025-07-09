@@ -36,22 +36,22 @@
     "quarter": ""
   },
   "mlb": {
-    "home_team": "Chicago White Sox",
-    "away_team": "Toronto Blue Jays",
-    "home_short": "White Sox",
-    "away_short": "Blue Jays",
-    "home_score": "2",
-    "away_score": "1",
+    "home_team": "Milwaukee Brewers",
+    "away_team": "Los Angeles Dodgers",
+    "home_short": "Brewers",
+    "away_short": "Dodgers",
+    "home_score": "3",
+    "away_score": "2",
     "home_logo": "",
     "away_logo": "",
-    "home_record": "31-62",
-    "away_record": "54-39",
+    "home_record": "53-40",
+    "away_record": "56-38",
     "date": "07/09",
     "time": "11:10 AM",
     "status": "final",
     "is_live": false,
     "time_left": "0:00",
-    "quarter": 9
+    "quarter": 10
   },
   "nhl": {
     "home_team": "Utah Mammoth",
