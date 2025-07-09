@@ -36,22 +36,22 @@
     "quarter": ""
   },
   "mlb": {
-    "home_team": "Detroit Tigers",
-    "away_team": "Tampa Bay Rays",
-    "home_short": "Tigers",
-    "away_short": "Rays",
-    "home_score": "4",
-    "away_score": "2",
+    "home_team": "Baltimore Orioles",
+    "away_team": "New York Mets",
+    "home_short": "Orioles",
+    "away_short": "Mets",
+    "home_score": "6",
+    "away_score": "7",
     "home_logo": "",
     "away_logo": "",
-    "home_record": "59-34",
-    "away_record": "49-43",
+    "home_record": "40-50",
+    "away_record": "53-39",
     "date": "07/08",
-    "time": "3:40 PM",
+    "time": "3:35 PM",
     "status": "final",
     "is_live": false,
     "time_left": "0:00",
-    "quarter": 9
+    "quarter": 10
   },
   "nhl": {
     "home_team": "Utah Mammoth",
