@@ -4,6 +4,8 @@ from datetime import datetime
 from dateutil import parser
 import pytz
 
+PST = pytz.timezone("US/Pacific")
+
 def fetch_json(url):
     r = requests.get(url)
     r.raise_for_status()
@@ -16,43 +18,46 @@ def get_next_game(sport, league):
     if not events:
         return blank_game()
 
+    now_utc = datetime.now(pytz.utc)
     future = []
     for event in events:
-        dt = parser.parse(event["date"])
-        if dt > datetime.now(pytz.utc):
-            comp = event["competitions"][0]
-            clock = comp.get("status", {}).get("displayClock", "").lower()
-            if "tbd" not in clock:
-                future.append((dt, event))
+        try:
+            dt = parser.parse(event["date"])
+            if dt > now_utc:
+                comp = event["competitions"][0]
+                clock = comp.get("status", {}).get("displayClock", "").lower()
+                future.append({
+                    "datetime": dt,
+                    "event": event
+                })
+        except Exception:
+            continue
 
     if not future:
         return blank_game()
 
-    future.sort()
-    _, event = future[0]
-    comp = event["competitions"][0]
+    future.sort(key=lambda x: x["datetime"])
+    chosen = future[0]["event"]
+    comp = chosen["competitions"][0]
     home = comp["competitors"][0]
     away = comp["competitors"][1]
-
-    event_dt = parser.parse(event["date"])
-    home_score = home.get("score", "0")
-    away_score = away.get("score", "0")
+    event_dt = parser.parse(chosen["date"]).astimezone(PST)
 
     return {
         "home_team": home["team"]["displayName"],
         "away_team": away["team"]["displayName"],
         "home_short": home["team"]["shortDisplayName"],
         "away_short": away["team"]["shortDisplayName"],
-        "home_score": home_score,
-        "away_score": away_score,
+        "home_score": home.get("score", "0"),
+        "away_score": away.get("score", "0"),
         "home_logo": home["team"].get("logos", [{}])[0].get("href", ""),
         "away_logo": away["team"].get("logos", [{}])[0].get("href", ""),
         "home_record": home.get("records", [{}])[0].get("summary", ""),
         "away_record": away.get("records", [{}])[0].get("summary", ""),
-        "date": event_dt.astimezone(pytz.timezone("US/Pacific")).strftime("%m/%d"),
-        "time": event_dt.astimezone(pytz.timezone("US/Pacific")).strftime("%-I:%M %p"),
-        "status": event["status"]["type"]["description"].lower(),
-        "is_live": event["status"]["type"]["state"] == "in",
+        "date": event_dt.strftime("%m/%d"),
+        "time": event_dt.strftime("%-I:%M %p"),
+        "status": chosen["status"]["type"]["description"].lower(),
+        "is_live": chosen["status"]["type"]["state"] == "in",
         "time_left": comp.get("status", {}).get("displayClock", ""),
         "quarter": comp.get("status", {}).get("period", "")
     }
@@ -83,10 +88,10 @@ def main():
         "nba": get_next_game("basketball", "nba"),
         "mlb": get_next_game("baseball", "mlb"),
         "nhl": get_next_game("hockey", "nhl"),
-        "seahawks": blank_game(),  # Placeholder
-        "mariners": blank_game(),  # Placeholder
-        "kraken": blank_game(),    # Placeholder
-        "soccer": []               # Placeholder
+        "seahawks": blank_game(),
+        "mariners": blank_game(),
+        "kraken": blank_game(),
+        "soccer": []
     }
 
     with open("sports.json", "w") as f:
