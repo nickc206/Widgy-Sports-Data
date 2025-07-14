@@ -36,22 +36,22 @@
     "quarter": ""
   },
   "mlb": {
-    "home_team": "",
-    "away_team": "",
-    "home_short": "",
-    "away_short": "",
-    "home_score": "",
-    "away_score": "",
+    "home_team": "National All-Stars",
+    "away_team": "American All-Stars",
+    "home_short": "National",
+    "away_short": "American",
+    "home_score": "0",
+    "away_score": "0",
     "home_logo": "",
     "away_logo": "",
     "home_record": "",
     "away_record": "",
-    "date": "",
-    "time": "",
+    "date": "07/15",
+    "time": "5:00 PM",
     "status": "scheduled",
     "is_live": false,
-    "time_left": "",
-    "quarter": ""
+    "time_left": "0:00",
+    "quarter": 1
   },
   "nhl": {
     "home_team": "Utah Mammoth",
