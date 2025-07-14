@@ -54,10 +54,10 @@
     "quarter": 1
   },
   "nhl": {
-    "home_team": "Utah Mammoth",
-    "away_team": "Colorado Avalanche",
-    "home_short": "Mammoth",
-    "away_short": "Avalanche",
+    "home_team": "Dallas Stars",
+    "away_team": "St. Louis Blues",
+    "home_short": "Stars",
+    "away_short": "Blues",
     "home_score": "0",
     "away_score": "0",
     "home_logo": "",
@@ -65,7 +65,7 @@
     "home_record": "",
     "away_record": "",
     "date": "09/20",
-    "time": "9:00 PM",
+    "time": "4:00 PM",
     "status": "scheduled",
     "is_live": false,
     "time_left": "0:00",
