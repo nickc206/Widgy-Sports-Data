@@ -1,9 +1,9 @@
 {
   "nfl": {
-    "home_team": "Tampa Bay Buccaneers",
-    "away_team": "Tennessee Titans",
-    "home_short": "Buccaneers",
-    "away_short": "Titans",
+    "home_team": "Green Bay Packers",
+    "away_team": "New York Jets",
+    "home_short": "Packers",
+    "away_short": "Jets",
     "home_score": "0",
     "away_score": "0",
     "home_logo": "",
@@ -11,7 +11,7 @@
     "home_record": "0-0",
     "away_record": "0-0",
     "date": "08/09",
-    "time": "4:30 PM",
+    "time": "5:00 PM",
     "status": "scheduled",
     "is_live": false,
     "time_left": "0:00",
