@@ -1,9 +1,9 @@
 {
   "nfl": {
-    "home_team": "Atlanta Falcons",
-    "away_team": "Tampa Bay Buccaneers",
-    "home_short": "Falcons",
-    "away_short": "Buccaneers",
+    "home_team": "Denver Broncos",
+    "away_team": "Tennessee Titans",
+    "home_short": "Broncos",
+    "away_short": "Titans",
     "home_score": "0",
     "away_score": "0",
     "home_logo": "",
@@ -11,7 +11,7 @@
     "home_record": "0-0",
     "away_record": "0-0",
     "date": "09/07",
-    "time": "10:00 AM",
+    "time": "1:05 PM",
     "status": "scheduled",
     "is_live": false,
     "time_left": "0:00",
