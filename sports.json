@@ -1,9 +1,9 @@
 {
   "nfl": {
-    "home_team": "Green Bay Packers",
-    "away_team": "Detroit Lions",
-    "home_short": "Packers",
-    "away_short": "Lions",
+    "home_team": "Buffalo Bills",
+    "away_team": "Baltimore Ravens",
+    "home_short": "Bills",
+    "away_short": "Ravens",
     "home_score": "0",
     "away_score": "0",
     "home_logo": "",
@@ -11,7 +11,7 @@
     "home_record": "0-0",
     "away_record": "0-0",
     "date": "09/07",
-    "time": "1:25 PM",
+    "time": "5:20 PM",
     "status": "scheduled",
     "is_live": false,
     "time_left": "0:00",
