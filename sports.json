@@ -18,10 +18,10 @@
     "quarter": ""
   },
   "nba": {
-    "home_team": "Miami Heat",
-    "away_team": "Charlotte Hornets",
-    "home_short": "Heat",
-    "away_short": "Hornets",
+    "home_team": "Milwaukee Bucks",
+    "away_team": "New York Knicks",
+    "home_short": "Bucks",
+    "away_short": "Knicks",
     "home_score": "0",
     "away_score": "0",
     "home_logo": "",
@@ -29,7 +29,7 @@
     "home_record": "2-1",
     "away_record": "2-1",
     "date": "10/28",
-    "time": "4:30 PM",
+    "time": "5:00 PM",
     "status": "scheduled",
     "is_live": false,
     "time_left": "0.0",
