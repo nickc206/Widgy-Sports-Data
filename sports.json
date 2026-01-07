@@ -1,21 +1,21 @@
 {
   "nfl": {
-    "home_team": "",
-    "away_team": "",
-    "home_short": "",
-    "away_short": "",
-    "home_score": "",
-    "away_score": "",
+    "home_team": "Carolina Panthers",
+    "away_team": "Los Angeles Rams",
+    "home_short": "Panthers",
+    "away_short": "Rams",
+    "home_score": "0",
+    "away_score": "0",
     "home_logo": "",
     "away_logo": "",
-    "home_record": "",
-    "away_record": "",
-    "date": "",
-    "time": "",
+    "home_record": "8-9",
+    "away_record": "12-5",
+    "date": "01/10",
+    "time": "1:30 PM",
     "status": "scheduled",
     "is_live": false,
-    "time_left": "",
-    "quarter": ""
+    "time_left": "0:00",
+    "quarter": 0
   },
   "nba": {
     "home_team": "",
