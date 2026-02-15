@@ -18,10 +18,10 @@
     "quarter": ""
   },
   "nba": {
-    "home_team": "Team Stars",
-    "away_team": "World",
-    "home_short": "Team Stars",
-    "away_short": "World",
+    "home_team": "Team Stripes",
+    "away_team": "TBD",
+    "home_short": "Team Stripes",
+    "away_short": "TBD",
     "home_score": "0",
     "away_score": "0",
     "home_logo": "",
@@ -29,7 +29,7 @@
     "home_record": "",
     "away_record": "",
     "date": "02/15",
-    "time": "2:00 PM",
+    "time": "2:55 PM",
     "status": "scheduled",
     "is_live": false,
     "time_left": "0.0",
