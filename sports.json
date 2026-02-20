@@ -36,10 +36,10 @@
     "quarter": 0
   },
   "mlb": {
-    "home_team": "Baltimore Orioles",
-    "away_team": "New York Yankees",
-    "home_short": "Orioles",
-    "away_short": "Yankees",
+    "home_team": "Chicago Cubs",
+    "away_team": "Chicago White Sox",
+    "home_short": "Cubs",
+    "away_short": "White Sox",
     "home_score": "0",
     "away_score": "0",
     "home_logo": "",
@@ -47,7 +47,7 @@
     "home_record": "0-0",
     "away_record": "0-0",
     "date": "02/20",
-    "time": "10:05 AM",
+    "time": "12:05 PM",
     "status": "scheduled",
     "is_live": false,
     "time_left": "0:00",
