@@ -36,10 +36,10 @@
     "quarter": 0
   },
   "mlb": {
-    "home_team": "Houston Astros",
-    "away_team": "Los Angeles Angels",
-    "home_short": "Astros",
-    "away_short": "Angels",
+    "home_team": "Seattle Mariners",
+    "away_team": "Cleveland Guardians",
+    "home_short": "Mariners",
+    "away_short": "Guardians",
     "home_score": "0",
     "away_score": "0",
     "home_logo": "",
@@ -47,7 +47,7 @@
     "home_record": "1-2",
     "away_record": "2-1",
     "date": "03/29",
-    "time": "11:10 AM",
+    "time": "4:20 PM",
     "status": "scheduled",
     "is_live": false,
     "time_left": "0:00",
