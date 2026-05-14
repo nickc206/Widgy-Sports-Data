@@ -48,8 +48,8 @@
     "away_record": "20-23",
     "date": "05/14",
     "time": "3:45 PM",
-    "status": "scheduled",
-    "is_live": false,
+    "status": "rain delay",
+    "is_live": true,
     "time_left": "0:00",
     "quarter": 1
   },
