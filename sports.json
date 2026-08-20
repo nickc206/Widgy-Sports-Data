@@ -48,8 +48,8 @@
     "away_record": "71-55",
     "date": "08/20",
     "time": "3:35 PM",
-    "status": "scheduled",
-    "is_live": false,
+    "status": "delayed",
+    "is_live": true,
     "time_left": "0:00",
     "quarter": 1
   },
