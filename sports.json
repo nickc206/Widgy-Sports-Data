@@ -18,10 +18,10 @@
     "quarter": 0
   },
   "nba": {
-    "home_team": "Milwaukee Bucks",
-    "away_team": "Chicago Bulls",
-    "home_short": "Bucks",
-    "away_short": "Bulls",
+    "home_team": "Boston Celtics",
+    "away_team": "New York Knicks",
+    "home_short": "Celtics",
+    "away_short": "Knicks",
     "home_score": "0",
     "away_score": "0",
     "home_logo": "",
@@ -29,7 +29,7 @@
     "home_record": "0-1",
     "away_record": "0-1",
     "date": "10/23",
-    "time": "1:00 PM",
+    "time": "4:00 PM",
     "status": "scheduled",
     "is_live": false,
     "time_left": "0.0",
